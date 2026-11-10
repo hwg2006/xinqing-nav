@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#eef4f7">
+<title>心晴导航 · 随时可用的情绪陪伴</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 20% 0%, #dff0ee 0%, #eef4f7 45%, #f7f5f1 100%);
+    color: #1f2d33;
+    display: flex;
+    justify-content: center;
+  }
+  .shell {
+    width: 100%;
+    max-width: 780px;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 16px 0;
+  }
+  header { display: flex; align-items: center; gap: 12px; padding: 4px 2px 14px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 14px; flex: none;
+    background: linear-gradient(150deg, #5fb3a8, #3d8f96);
+    box-shadow: 0 8px 18px rgba(61, 143, 150, .28);
+    display: grid; place-items: center;
+  }
+  .logo svg { width: 22px; height: 22px; }
+  .brand h1 { font-size: 17px; margin: 0; letter-spacing: .5px; font-weight: 600; }
+  .brand p { margin: 2px 0 0; font-size: 12px; color: #6b8089; }
+  .notice {
+    font-size: 12px; line-height: 1.6; color: #5d737c;
+    background: rgba(255,255,255,.62);
+    border: 1px solid rgba(95, 179, 168, .22);
+    border-radius: 12px;
+    padding: 9px 12px;
+    margin-bottom: 10px;
+  }
+  .notice b { color: #2f6f73; font-weight: 600; }
+  #log {
+    flex: 1; overflow-y: auto; padding: 4px 2px 12px;
+    display: flex; flex-direction: column; gap: 12px;
+    scroll-behavior: smooth;
+  }
+  #log::-webkit-scrollbar { width: 6px; }
+  #log::-webkit-scrollbar-thumb { background: rgba(95,179,168,.35); border-radius: 3px; }
+  .msg { display: flex; gap: 8px; max-width: 92%; animation: rise .25s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .msg.user { margin-left: auto; flex-direction: row-reverse; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 10px; flex: none;
+    display: grid; place-items: center; font-size: 12px; font-weight: 600;
+    background: #fff; color: #3d8f96; border: 1px solid rgba(95,179,168,.3);
+  }
+  .msg.user .avatar { background: #3d8f96; color: #fff; border-color: transparent; }
+  .bubble {
+    padding: 11px 14px; border-radius: 16px; font-size: 14.5px; line-height: 1.72;
+    white-space: pre-wrap; word-break: break-word;
+    background: #fff; border: 1px solid rgba(31,45,51,.06);
+    box-shadow: 0 4px 14px rgba(31,45,51,.05);
+  }
+  .msg.user .bubble {
+    background: linear-gradient(150deg, #57a9a2, #3d8f96); color: #fff;
+    border-color: transparent; box-shadow: 0 6px 16px rgba(61,143,150,.22);
+  }
+  .bubble.error { background: #fdf1ee; border-color: #f3d3ca; color: #a04b34; }
+  .typing::after {
+    content: ""; display: inline-block; width: 6px; height: 15px; margin-left: 2px;
+    background: #5fb3a8; vertical-align: -2px; animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; font-size: 12.5px; color: #35636a; cursor: pointer;
+    background: rgba(255,255,255,.8); border: 1px solid rgba(95,179,168,.32);
+    padding: 7px 12px; border-radius: 999px; transition: .18s;
+  }
+  .chip:hover { background: #fff; border-color: #5fb3a8; transform: translateY(-1px); }
+  .composer {
+    display: flex; gap: 10px; align-items: flex-end;
+    padding: 10px 0 calc(14px + env(safe-area-inset-bottom));
+    background: transparent;
+  }
+  textarea {
+    flex: 1; resize: none; max-height: 120px; min-height: 46px;
+    padding: 13px 15px; border-radius: 15px; font: inherit; font-size: 14.5px;
+    border: 1px solid rgba(31,45,51,.12); background: #fff; color: inherit;
+    outline: none; transition: border-color .18s, box-shadow .18s;
+  }
+  textarea:focus { border-color: #5fb3a8; box-shadow: 0 0 0 3px rgba(95,179,168,.15); }
+  button.send {
+    flex: none; height: 46px; padding: 0 20px; border: 0; border-radius: 15px;
+    font: inherit; font-size: 14px; font-weight: 600; color: #fff; cursor: pointer;
+    background: linear-gradient(150deg, #57a9a2, #3d8f96);
+    box-shadow: 0 6px 16px rgba(61,143,150,.28);
+    transition: .18s;
+  }
+  button.send:hover { transform: translateY(-1px); }
+  button.send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .mask {
+    position: fixed; inset: 0; background: rgba(20,32,36,.42); backdrop-filter: blur(3px);
+    display: none; place-items: center; z-index: 9; padding: 24px;
+  }
+  .mask.show { display: grid; }
+  .card {
+    width: 100%; max-width: 340px; background: #fff; border-radius: 20px; padding: 22px 20px;
+    box-shadow: 0 20px 50px rgba(20,32,36,.25);
+  }
+  .card h2 { margin: 0 0 6px; font-size: 16px; }
+  .card p { margin: 0 0 14px; font-size: 12.5px; color: #6b8089; line-height: 1.6; }
+  .card input {
+    width: 100%; padding: 11px 13px; border-radius: 11px; font: inherit; font-size: 14px;
+    border: 1px solid rgba(31,45,51,.15); outline: none; margin-bottom: 10px;
+  }
+  .card input:focus { border-color: #5fb3a8; }
+  .card button {
+    width: 100%; height: 42px; border: 0; border-radius: 11px; font: inherit; font-weight: 600;
+    color: #fff; cursor: pointer; background: linear-gradient(150deg, #57a9a2, #3d8f96);
+  }
+  .err-tip { color: #a04b34; font-size: 12px; min-height: 16px; margin-bottom: 6px; }
+  @media (max-width: 480px) {
+    .shell { padding: 12px 12px 0; }
+    .brand h1 { font-size: 16px; }
+    .bubble { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1C19 15.6 12 20 12 20z"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>心晴导航</h1>
+      <p>不预约、不排队的校园心理支持</p>
+    </div>
+  </header>
+
+  <div class="notice">
+    这是 AI 陪伴体验，不是心理咨询或医疗诊断。如果你有伤害自己的想法，请立即拨打 <b>12356</b> 或 <b>120</b>，或联系身边信任的人。
+  </div>
+
+  <div id="log"></div>
+
+  <div class="chips" id="chips">
+    <div class="chip">最近总是睡不着，脑子停不下来</div>
+    <div class="chip">明天要答辩，现在心跳得厉害</div>
+    <div class="chip">室友关系让我很累，不知道怎么开口</div>
+    <div class="chip">做什么都提不起劲，是不是我太脆弱了</div>
+    <div class="chip">笑死我了，食堂阿姨今天多打了一勺菜</div>
+    <div class="chip">压力大到一个都不想开了</div>
+    <div class="chip">我想跳了，真的撑不住</div>
+  </div>
+
+  <div class="composer">
+    <textarea id="input" rows="1" placeholder="想说什么都可以，我在听…" maxlength="500"></textarea>
+    <button class="send" id="send">发送</button>
+  </div>
+</div>
+
+<div class="mask" id="mask">
+  <div class="card">
+    <h2>输入体验口令</h2>
+    <p>为防止链接被公开滥用，请输入主办方提供或作品说明中的访问口令。</p>
+    <input id="code" type="text" placeholder="访问口令" autocomplete="off">
+    <div class="err-tip" id="errTip"></div>
+    <button id="okCode">进入体验</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const log = document.getElementById('log');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+  const mask = document.getElementById('mask');
+  const codeInput = document.getElementById('code');
+  const errTip = document.getElementById('errTip');
+  const CODE_KEY = 'xq_access_code';
+
+  let history = [];
+  let busy = false;
+  let needCode = false;
+  let pendingText = '';
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function scrollBottom() { log.scrollTop = log.scrollHeight; }
+
+  function addMsg(role, text) {
+    const wrap = el('div', 'msg ' + role);
+    wrap.appendChild(el('div', 'avatar', role === 'user' ? '我' : '晴'));
+    const bubble = el('div', 'bubble', text || '');
+    wrap.appendChild(bubble);
+    log.appendChild(wrap);
+    scrollBottom();
+    return bubble;
+  }
+
+  function showMask(msg) {
+    needCode = true;
+    errTip.textContent = msg || '';
+    mask.classList.add('show');
+    codeInput.focus();
+  }
+
+  function autoGrow() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  }
+
+  async function send(text) {
+    text = (text || input.value).trim();
+    if (!text || busy) return;
+    busy = true;
+    sendBtn.disabled = true;
+    input.value = '';
+    autoGrow();
+
+    addMsg('user', text);
+    history.push({ role: 'user', content: text });
+    if (history.length > 16) history = history.slice(-16);
+
+    const bubble = addMsg('assistant', '');
+    bubble.classList.add('typing');
+
+    let acc = '';
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Access-Code': localStorage.getItem(CODE_KEY) || ''
+        },
+        body: JSON.stringify({ messages: history })
+      });
+
+      if (res.status === 401) {
+        history.pop();
+        bubble.remove();
+        pendingText = text;
+        const data = await res.json().catch(() => ({}));
+        showMask(data.error || '请先输入访问口令');
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        bubble.classList.remove('typing');
+        bubble.classList.add('error');
+        bubble.textContent = data.error || ('请求失败（' + res.status + '）');
+        history.pop();
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      let failed = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (!raw) continue;
+          let obj;
+          try { obj = JSON.parse(raw); } catch (e) { continue; }
+          if (obj.type === 'delta') {
+            acc += obj.text;
+            bubble.textContent = acc;
+            scrollBottom();
+          } else if (obj.type === 'error') {
+            failed = true;
+            bubble.classList.remove('typing');
+            bubble.classList.add('error');
+            bubble.textContent = obj.message || '出了点问题，请再试一次';
+          } else if (obj.type === 'done') {
+            bubble.classList.remove('typing');
+          }
+        }
+      }
+      bubble.classList.remove('typing');
+      if (!failed && acc) {
+        history.push({ role: 'assistant', content: acc });
+      } else if (!failed && !acc) {
+        bubble.classList.add('error');
+        bubble.textContent = '没有收到回复，请再发一次';
+      }
+    } catch (e) {
+      bubble.classList.remove('typing');
+      bubble.classList.add('error');
+      bubble.textContent = '网络开小差了，请检查连接后重试';
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      scrollBottom();
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', () => send());
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  input.addEventListener('input', autoGrow);
+
+  document.getElementById('chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (chip) send(chip.textContent);
+  });
+
+  document.getElementById('okCode').addEventListener('click', async () => {
+    const code = codeInput.value.trim();
+    if (!code) { errTip.textContent = '请输入口令'; return; }
+    localStorage.setItem(CODE_KEY, code);
+    mask.classList.remove('show');
+    errTip.textContent = '';
+    if (pendingText) {
+      const text = pendingText;
+      pendingText = '';
+      await send(text);
+    }
+  });
+
+  codeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('okCode').click();
+  });
+
+  fetch('/api/config').then(r => r.json()).then(cfg => {
+    if (cfg.need_code && !localStorage.getItem(CODE_KEY)) showMask('');
+  }).catch(() => {});
+
+  addMsg('assistant', '你好，我是晴晴。今天想聊点什么？\n不着急，慢慢说，我在听。');
+})();
+</script>
+</body>
+</html>

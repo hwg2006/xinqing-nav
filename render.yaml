@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: xinqing-nav
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: LLM_BASE_URL
+        value: https://open.bigmodel.cn/api/paas/v4
+      - key: LLM_MODEL
+        value: glm-4-flash
+      - key: LLM_API_KEY
+        sync: false          # 在 Render 控制台里手动填，不进仓库
+      - key: ACCESS_CODE
+        sync: false          # 评委用的体验口令，留空表示不需要口令
+      - key: PER_IP_MIN
+        value: "8"
+      - key: PER_IP_DAY
+        value: "120"
+      - key: GLOBAL_DAY
+        value: "3000"
+      - key: MAX_TOKENS
+        value: "400"
+      - key: MAX_CONCURRENCY
+        value: "6"
