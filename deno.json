@@ -1,0 +1,6 @@
+{
+  "deploy": {
+    "project": "xinqing-nav",
+    "entrypoint": "./deno/main.js"
+  }
+}
