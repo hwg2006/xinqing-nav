@@ -13,10 +13,6 @@ services:
         value: https://open.bigmodel.cn/api/paas/v4
       - key: LLM_MODEL
         value: glm-4-flash
-      - key: LLM_API_KEY
-        sync: false          # 在 Render 控制台里手动填，不进仓库
-      - key: ACCESS_CODE
-        sync: false          # 评委用的体验口令，留空表示不需要口令
       - key: PER_IP_MIN
         value: "8"
       - key: PER_IP_DAY
